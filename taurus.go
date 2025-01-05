@@ -14,6 +14,7 @@ import (
 
 var (
 	envPrefix          string
+	expandEnv          bool
 	envAliases         = map[string][]string{}
 	flags              = map[string]*pflag.Flag{}
 	customMarshalers   = map[reflect.Type]func(interface{}) ([]byte, error){}
@@ -22,6 +23,10 @@ var (
 
 func SetEnvPrefix(prefix string) {
 	envPrefix = prefix
+}
+
+func SetExpandEnv(expand bool) {
+	expandEnv = expand
 }
 
 func BindEnvAlias(fieldPath string, aliases ...string) {
@@ -53,7 +58,12 @@ func RegisterCustomUnmarshaler[T any](unmarshaler func(*T, []byte) error) {
 }
 
 func Load(configData string, cfg interface{}) error {
-	if err := yaml.Unmarshal([]byte(configData), cfg); err != nil {
+	data := configData
+	if expandEnv {
+		data = os.ExpandEnv(data)
+	}
+
+	if err := yaml.Unmarshal([]byte(data), cfg); err != nil {
 		return fmt.Errorf("failed to unmarshal config data: %w", err)
 	}
 	return nil
