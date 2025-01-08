@@ -175,6 +175,7 @@ func setField(field reflect.StructField, fieldValue reflect.Value, value string)
 		if err := customUnmarshaler(fieldValue.Addr().Interface(), []byte(value)); err != nil {
 			return fmt.Errorf("failed to unmarshal custom field: %v", err)
 		}
+		return nil
 	}
 
 	if unmarshaler, ok := fieldValue.Addr().Interface().(encoding.TextUnmarshaler); ok {
