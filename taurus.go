@@ -129,7 +129,11 @@ func LoadEnv(prefix string, cfg interface{}) error {
 	return nil
 }
 
-func LoadFlags(prefix string, cfg interface{}) error {
+func LoadFlags(cfg interface{}) error {
+	return loadFlags("", cfg)
+}
+
+func loadFlags(prefix string, cfg interface{}) error {
 	v := reflect.ValueOf(cfg)
 	if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("cfg must be a pointer to a struct")
@@ -148,7 +152,7 @@ func LoadFlags(prefix string, cfg interface{}) error {
 		}
 
 		if field.Type.Kind() == reflect.Struct {
-			if err := LoadFlags(fieldPath, fieldValue.Addr().Interface()); err != nil {
+			if err := loadFlags(fieldPath, fieldValue.Addr().Interface()); err != nil {
 				return err
 			}
 			continue
