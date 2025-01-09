@@ -95,7 +95,10 @@ func LoadEnv(prefix string, cfg interface{}) error {
 		if tag == "" {
 			tag = field.Name
 		}
-		envKey := prefix + "_" + strings.ToUpper(tag)
+		envKey := strings.ToUpper(tag)
+		if prefix != "" {
+			envKey = prefix + "_" + envKey
+		}
 
 		if field.Type.Kind() == reflect.Struct {
 			if err := LoadEnv(envKey, fieldValue.Addr().Interface()); err != nil {
