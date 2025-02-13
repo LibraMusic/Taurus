@@ -70,8 +70,13 @@ func (t *Taurus) BindFlag(fieldPath string, flag *pflag.Flag) {
 
 // RegisterMarshaler registers a custom marshaler for the type argument T.
 // If the parameter "t" is nil, the default Taurus instance is used.
-func RegisterMarshaler[T any](t *Taurus, marshaler func(T) ([]byte, error)) {
-	t.customMarshalers[reflect.TypeFor[T]()] = func(v interface{}) ([]byte, error) {
+func RegisterMarshaler[T any](ta *Taurus, marshaler func(T) ([]byte, error)) {
+	taur := ta
+	if ta == nil {
+		taur = t
+	}
+
+	taur.customMarshalers[reflect.TypeFor[T]()] = func(v interface{}) ([]byte, error) {
 		return marshaler(v.(T))
 	}
 
@@ -82,8 +87,13 @@ func RegisterMarshaler[T any](t *Taurus, marshaler func(T) ([]byte, error)) {
 
 // RegisterUnmarshaler registers a custom unmarshaler for the type argument T.
 // If the parameter "t" is nil, the default Taurus instance is used.
-func RegisterUnmarshaler[T any](t *Taurus, unmarshaler func(*T, []byte) error) {
-	t.customUnmarshalers[reflect.TypeFor[T]()] = func(v interface{}, data []byte) error {
+func RegisterUnmarshaler[T any](ta *Taurus, unmarshaler func(*T, []byte) error) {
+	taur := ta
+	if ta == nil {
+		taur = t
+	}
+
+	taur.customUnmarshalers[reflect.TypeFor[T]()] = func(v interface{}, data []byte) error {
 		return unmarshaler(v.(*T), data)
 	}
 
