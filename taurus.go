@@ -19,20 +19,22 @@ func init() {
 }
 
 type Taurus struct {
-	envPrefix          string
-	expandEnv          bool
-	envAliases         map[string][]string
-	flags              map[string]*pflag.Flag
-	customMarshalers   map[reflect.Type]func(interface{}) ([]byte, error)
-	customUnmarshalers map[reflect.Type]func(interface{}, []byte) error
+	envPrefix               string
+	expandEnv               bool
+	envAliases              map[string][]string
+	flags                   map[string]*pflag.Flag
+	stripUnmarshaledStrings bool
+	customMarshalers        map[reflect.Type]func(interface{}) ([]byte, error)
+	customUnmarshalers      map[reflect.Type]func(interface{}, []byte) error
 }
 
 func New() *Taurus {
 	return &Taurus{
-		envAliases:         make(map[string][]string),
-		flags:              make(map[string]*pflag.Flag),
-		customMarshalers:   make(map[reflect.Type]func(interface{}) ([]byte, error)),
-		customUnmarshalers: make(map[reflect.Type]func(interface{}, []byte) error),
+		envAliases:              make(map[string][]string),
+		flags:                   make(map[string]*pflag.Flag),
+		stripUnmarshaledStrings: true,
+		customMarshalers:        make(map[reflect.Type]func(interface{}) ([]byte, error)),
+		customUnmarshalers:      make(map[reflect.Type]func(interface{}, []byte) error),
 	}
 }
 
@@ -68,6 +70,14 @@ func (t *Taurus) BindFlag(fieldPath string, flag *pflag.Flag) {
 	t.flags[fieldPath] = flag
 }
 
+func SetStripUnmarshaledStrings(strip bool) {
+	t.SetStripUnmarshaledStrings(strip)
+}
+
+func (t *Taurus) SetStripUnmarshaledStrings(strip bool) {
+	t.stripUnmarshaledStrings = strip
+}
+
 // RegisterMarshaler registers a custom marshaler for the type argument T.
 // If the parameter "t" is nil, the default Taurus instance is used.
 func RegisterMarshaler[T any](ta *Taurus, marshaler func(T) ([]byte, error)) {
@@ -94,10 +104,16 @@ func RegisterUnmarshaler[T any](ta *Taurus, unmarshaler func(*T, []byte) error) 
 	}
 
 	taur.customUnmarshalers[reflect.TypeFor[T]()] = func(v interface{}, data []byte) error {
+		if taur.stripUnmarshaledStrings {
+			data = []byte(strings.TrimSpace(string(data)))
+		}
 		return unmarshaler(v.(*T), data)
 	}
 
 	yaml.RegisterCustomUnmarshaler(func(v *T, data []byte) error {
+		if taur.stripUnmarshaledStrings {
+			data = []byte(strings.TrimSpace(string(data)))
+		}
 		return unmarshaler(v, data)
 	})
 }

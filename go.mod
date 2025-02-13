@@ -1,4 +1,4 @@
-module github.com/libramusic/taurus
+module github.com/libramusic/taurus/v2
 
 go 1.23.5
 
